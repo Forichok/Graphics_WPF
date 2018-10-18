@@ -1,0 +1,166 @@
+﻿<Window x:Class="Graphics_WPF.MainWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        xmlns:cmd="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
+        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+     
+       
+ 
+        xmlns:graphicsWpf="clr-namespace:Graphics_WPF"
+    
+        xmlns:converters="clr-namespace:Graphics_WPF.Converters"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+
+    <Window.DataContext>
+        <graphicsWpf:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="MenuItem">
+   
+        </Style>
+
+        <Style TargetType="TextBlock">
+
+        </Style>
+
+        <converters:ItemPositionToIndexConverter x:Key="NumConverter"/>
+
+        <Style TargetType="{x:Type GridViewColumnHeader}">
+  
+        </Style>
+
+    </Window.Resources>
+
+
+    <Grid >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="0.15*"/>
+            <RowDefinition Height="2*"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.ColumnSpan="2"  VerticalAlignment="Center">
+            <MenuItem Header="File">
+                <MenuItem Header="Load from..." Command="{Binding LoadCommand}"/>
+                <MenuItem Header="Append from..." Command="{Binding AppendCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid Grid.Column="0" Grid.Row="1" Margin="10, 0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock HorizontalAlignment="Right"  Margin="0, 0, 20, 0" VerticalAlignment="Center">
+                <TextBlock >Selected point: </TextBlock>
+                <TextBlock Text="{Binding SelectedX, Mode=OneWay}" />
+                <TextBlock >, </TextBlock>
+                <TextBlock Text="{Binding SelectedY, Mode=OneWay}" />
+            </TextBlock>
+
+                <Button Content="Create normal" IsEnabled="{Binding SelectedIsExist}" Margin="0,0,10,0"
+                    Command="{Binding CreateNormalCommand}"/>
+                <Button Content="Create tangent" IsEnabled="{Binding SelectedIsExist}"
+                    Command="{Binding CreateTangentCommand}"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Column="0" Grid.Row="2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <lvc:CartesianChart Grid.Row="0"
+                    x:Name="MainChart" 
+                                    DisableAnimations="True"
+                                    Zoom="{Binding ZoomingMode}"
+                                    Series="{Binding Series}"
+                                    DataClickCommand="{Binding DataClickCommand}"
+                                    >
+
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Y" x:Name="AxisY"
+                                  MaxRange="{Binding MaxRange, Mode=OneWay}"
+                                  MinRange="{Binding MinRange, Mode=OneWay}"
+                                   />
+                    </lvc:CartesianChart.AxisY>
+
+
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="X" x:Name="AxisX" 
+                                  MaxRange="{Binding MaxRange, Mode=OneWay}"
+                                  MinRange="{Binding MinRange, Mode=OneWay}"
+                                  RangeChangedCommand="{Binding RangeChangedCommand}"/>
+                    </lvc:CartesianChart.AxisX>
+                </lvc:CartesianChart>
+
+                <TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0,0,0">
+                    <TextBlock >Mouse at: </TextBlock>
+                    <TextBlock x:Name="X" Text="{Binding MouseX}" />
+                    <TextBlock >, </TextBlock>
+                    <TextBlock x:Name="Y" Text="{Binding MouseY}" />
+                </TextBlock>
+            </Grid>
+        </Grid>
+
+
+
+        <Grid Grid.Column="1" Grid.RowSpan="2" Grid.Row="1" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+            <ListView ItemsSource="{Binding Equations}" HorizontalAlignment="Center" >
+
+                <ListView.Resources>
+                    <DataTemplate x:Key="NumberColumnDataTemplate">
+                        <TextBlock Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListViewItem},
+                Converter={StaticResource ResourceKey=NumConverter}}" HorizontalAlignment="Center" />
+                    </DataTemplate>
+
+                    <DataTemplate  x:Key="EqColumnDataTemplate" DataType="graphicsWpf:EquationModel" >
+                        <TextBlock MinWidth="100" Text="{Binding StrExpression}" HorizontalAlignment="Stretch" />
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="CheckDataTemplate" DataType="graphicsWpf:EquationModel" >
+                        <CheckBox IsChecked="{Binding IsEnabled}" Command="{Binding RelativeSource 
+                                    ={RelativeSource Mode=FindAncestor, AncestorType=ListView}, Path=DataContext.UpdateCommand}"/>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="ColorDataTemplate" DataType="graphicsWpf:EquationModel">
+                        <StackPanel>
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                    <cmd:EventToCommand Command="{Binding RelativeSource 
+                                        ={RelativeSource Mode=FindAncestor, AncestorType=ListView}, Path=DataContext.ChangeColorCommand}"
+                                                            PassEventArgsToCommand="True" />
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <Ellipse Fill="{Binding Brush}" Height="15" Width="15"/>
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="WidthDataTemplate" DataType="graphicsWpf:EquationModel">
+                        <TextBox x:Name="WidthText"   Text="{Binding LineWidth}"/>
+                    </DataTemplate>
+                </ListView.Resources>
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="" CellTemplate="{StaticResource ResourceKey = CheckDataTemplate}"/>
+                        <GridViewColumn Header="№" CellTemplate="{StaticResource ResourceKey = NumberColumnDataTemplate}"/>
+                        <GridViewColumn Header="Equation" CellTemplate="{StaticResource ResourceKey = EqColumnDataTemplate}"/>
+                        <GridViewColumn Header="Color" CellTemplate="{StaticResource ColorDataTemplate}"/>
+                        <GridViewColumn Header="Width" CellTemplate="{StaticResource WidthDataTemplate}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+
+    </Grid>
+</Window>
